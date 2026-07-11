@@ -58,6 +58,22 @@ FocusScope {
         return result
     }
 
+    function sortStaticItemsForDisplay(itemArr) {
+        if (!itemArr) return []
+        var result = itemArr.slice()
+        if (navParams.mode === "static" && navParams.title === "COLLECTIONS") {
+            result.sort(function(a, b) {
+                var aValue = a && (a.releaseDate || a.ReleaseDate)
+                var bValue = b && (b.releaseDate || b.ReleaseDate)
+                if (!aValue && !bValue) return 0
+                if (!aValue) return 1
+                if (!bValue) return -1
+                return Date.parse(aValue) - Date.parse(bValue)
+            })
+        }
+        return result
+    }
+
     Connections {
         target: jellyfinBackend
 
@@ -130,7 +146,7 @@ FocusScope {
             // Pre-filtered list handed over by Boxset.qml — no fetch needed.
             isLoading = false
             errorMessage = ""
-            items = navParams.items || []
+            items = itemListRoot.sortStaticItemsForDisplay(navParams.items || [])
             if (items.length > 0) {
                 var restore = (navListState.currentIndex !== undefined) ? navListState.currentIndex : 0
                 itemList.currentIndex = Math.min(restore, items.length - 1)

@@ -31,6 +31,20 @@ FocusScope {
         return null
     }
 
+    function sortCollectionItems(itemArr) {
+        if (!itemArr) return []
+        var result = itemArr.slice()
+        result.sort(function(a, b) {
+            var aValue = a && (a.releaseDate || a.ReleaseDate)
+            var bValue = b && (b.releaseDate || b.ReleaseDate)
+            if (!aValue && !bValue) return 0
+            if (!aValue) return 1
+            if (!bValue) return -1
+            return Date.parse(aValue) - Date.parse(bValue)
+        })
+        return result
+    }
+
     Connections {
         target: jellyfinBackend
 
@@ -59,7 +73,7 @@ FocusScope {
             if (cats.length === 1) {
                 boxsetRoot.replaceCurrent("Items.qml", {
                     mode: "static",
-                    items: cats[0].items,
+                    items: boxsetRoot.sortCollectionItems(cats[0].items),
                     title: cats[0].label,
                     libraryName: boxsetRoot.item.title || boxsetRoot.libraryName
                 })
@@ -101,7 +115,7 @@ FocusScope {
         if (!cat) return
         boxsetRoot.navigateTo("Items.qml", {
             mode: "static",
-            items: cat.items,
+            items: boxsetRoot.sortCollectionItems(cat.items),
             title: cat.label,
             libraryName: boxsetRoot.item.title || boxsetRoot.libraryName
         }, { currentIndex: categoryList.currentIndex })
