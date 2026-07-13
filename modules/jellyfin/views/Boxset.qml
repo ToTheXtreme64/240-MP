@@ -31,16 +31,22 @@ FocusScope {
         return null
     }
 
+    // Sort a bucket's items by release date, oldest first. Items with a missing
+    // or unparseable date sink to the bottom, keeping their incoming (SortName)
+    // order relative to one another.
     function sortCollectionItems(itemArr) {
         if (!itemArr) return []
         var result = itemArr.slice()
         result.sort(function(a, b) {
-            var aValue = a && (a.releaseDate || a.ReleaseDate)
-            var bValue = b && (b.releaseDate || b.ReleaseDate)
-            if (!aValue && !bValue) return 0
-            if (!aValue) return 1
-            if (!bValue) return -1
-            return Date.parse(aValue) - Date.parse(bValue)
+            var av = a && (a.releaseDate || a.ReleaseDate)
+            var bv = b && (b.releaseDate || b.ReleaseDate)
+            var at = av ? Date.parse(av) : NaN
+            var bt = bv ? Date.parse(bv) : NaN
+            var aBad = isNaN(at), bBad = isNaN(bt)
+            if (aBad && bBad) return 0
+            if (aBad) return 1
+            if (bBad) return -1
+            return at - bt
         })
         return result
     }
@@ -51,8 +57,8 @@ FocusScope {
         function onBoxsetChildrenLoaded(children) {
             boxsetRoot.isLoading = false
 
-            // Bucket children by content type, preserving the load order within
-            // each bucket (backend sorts by SortName).
+            // Bucket children by content type. Each bucket is re-sorted by
+            // release date (oldest first) via sortCollectionItems before handoff.
             var buckets = {}
             for (var i = 0; i < children.length; i++) {
                 var c = children[i]
