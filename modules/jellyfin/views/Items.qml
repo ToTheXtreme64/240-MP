@@ -21,8 +21,9 @@ FocusScope {
     property bool isLoading: false
     property string errorMessage: ""
 
-    // A–Z letter-jump panel — works for all list modes
-    property bool showLetterNav: items.length > 0
+    // A–Z letter-jump panel - only for the alphabetized full-library list
+    // ("browse"); resume/up_next are not alpha-sorted.
+    property bool showLetterNav: mode === "browse" || mode === "folder" || itemListRoot.mode === "boxset"
     property bool letterNavActive: false
     property var letterIndex: []
 
@@ -103,8 +104,6 @@ FocusScope {
             if (itemListRoot.mode !== "resume") return
             itemListRoot.isLoading = false
             itemListRoot.items = loadedItems
-            if (itemListRoot.showLetterNav)
-                itemListRoot.letterIndex = itemListRoot.buildLetterIndex(loadedItems)
             if (loadedItems.length > 0) {
                 itemList.currentIndex = 0
                 itemList.positionViewAtIndex(0, ListView.Contain)
@@ -115,8 +114,6 @@ FocusScope {
             if (itemListRoot.mode !== "up_next") return
             itemListRoot.isLoading = false
             itemListRoot.items = loadedItems
-            if (itemListRoot.showLetterNav)
-                itemListRoot.letterIndex = itemListRoot.buildLetterIndex(loadedItems)
             if (loadedItems.length > 0) {
                 itemList.currentIndex = 0
                 itemList.positionViewAtIndex(0, ListView.Contain)
@@ -136,8 +133,6 @@ FocusScope {
             isLoading = false
             errorMessage = ""
             items = navParams.items || []
-            if (showLetterNav)
-                letterIndex = buildLetterIndex(items)
             if (items.length > 0) {
                 var restore = (navListState.currentIndex !== undefined) ? navListState.currentIndex : 0
                 itemList.currentIndex = Math.min(restore, items.length - 1)
