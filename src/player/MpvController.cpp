@@ -138,6 +138,7 @@ void MpvController::loadAndPlay(const QString &url, float startSeconds,
     m_playlistPos = -1;
     m_paused      = false;
     m_lastEndFileReason.clear();
+    m_pendingStartClear = false;
 
 #ifdef Q_OS_MACOS
     // .app bundles launched via double-click get a minimal PATH that excludes
@@ -223,8 +224,10 @@ void MpvController::loadAndPlay(const QString &url, float startSeconds,
 
     if (playlistStart >= 0)
         args << QString("--playlist-start=%1").arg(playlistStart);
-    if (startSeconds > 0.5f)
+    if (startSeconds > 0.5f) {
         args << QString("--start=%1").arg(double(startSeconds), 0, 'f', 3);
+        m_pendingStartClear = true;
+    }
     if (audioTrack > 0)
         args << QString("--aid=%1").arg(audioTrack);
     for (const QString &sf : subFiles)
@@ -253,6 +256,10 @@ void MpvController::loadAndPlay(const QString &url, float startSeconds,
         scriptOpts << QString("transcode-offset=%1").arg(double(transcodeOffsetSec), 0, 'f', 3);
     if (screensaverTimeout > 0)
         scriptOpts << QString("screensaver_timeout=%1").arg(screensaverTimeout);
+    // Tell the OSC scripts to hide their CROP button on decode paths where
+    // --panscan would blank the video (Pi 3 overlay path, 1080p Playback ON).
+    if (cropUnavailable())
+        scriptOpts << QStringLiteral("hide-crop=1");
 
     // Hand the OSC a map of external sub-file URL -> friendly track name so it can show
     // the real subtitle name. mpv otherwise titles an external sub from its URL basename
@@ -315,11 +322,8 @@ void MpvController::loadAndPlay(const QString &url, float startSeconds,
     // Auto Crop: start with panscan=1 unless the current decode path can't crop.
     // The Pi3 overlay (smooth) path blanks video under panscan, so suppress there —
     // matching the 1080p Playback trade-off. The OSC CROP button still toggles live.
-    if (autoCropEnabled()) {
-        const bool cropSafe = !(m_videoProfile == VideoProfile::Pi3 && smoothPlaybackEnabled());
-        if (cropSafe)
-            args << QStringLiteral("--panscan=1");
-    }
+    if (autoCropEnabled() && !cropUnavailable())
+        args << QStringLiteral("--panscan=1");
 
     m_process = new QProcess(this);
     m_process->setProcessChannelMode(QProcess::MergedChannels);
@@ -479,6 +483,17 @@ void MpvController::onIpcReadyRead() {
             // so onProcessFinished can distinguish a natural finish from a quit.
             if (event == "end-file") {
                 m_lastEndFileReason = obj["reason"].toString();
+            } else if (event == "playback-restart" && m_pendingStartClear) {
+                // --start is a global option that mpv re-applies on *every* file load,
+                // and --loop-playlist reloads its entries on wrap. Left set, a resumed
+                // file would restart at the resume offset on every loop lap (and every
+                // later playlist entry would start there too) instead of at the
+                // beginning. mpv only reads `start` when it loads a file, and
+                // playback-restart means the initial seek is already done — so clearing
+                // it here leaves the current playback alone while every subsequent load
+                // begins at 0. Guarded so it fires once per session, not on every seek.
+                m_pendingStartClear = false;
+                sendCommand({"set_property", "start", "none"});
             } else if (event == "client-message") {
                 const QJsonArray args = obj["args"].toArray();
                 if (args.size() > 0) {
@@ -668,11 +683,12 @@ void MpvController::appendVideoArgs(QStringList &args) const {
             else
                 args << "--vo=drm" << "--hwdec=v4l2m2m-copy";
         } else {
-            // Pi 5 (Full KMS) and the safe fallback for unknown headless Linux.
-            // --monitorpixelaspect=0.82 corrects non-square pixel aspect on
-            // composite CRTs (704×432 on 4:3). Pure math, zero rendering cost.
-            args << "--vo=drm" << "--hwdec=auto-safe"
-                 << "--monitorpixelaspect=0.82";
+            // Pi 5 (Full KMS) and a safe fallback for unknown headless Linux for now.
+            // Note: Sometimes on Pi5+composite CRTs the Pi5 reports its composite raster 
+            // inconsistently (sometimes a narrow 704×432 instead of the standard 720×480i)
+            // this can be accomodated for in mpv.conf via a monitorpixelaspect property or
+            // in cmdline.txt/config.txt at the OS level vs hardcoding something here.
+            args << "--vo=drm" << "--hwdec=auto-safe";
         }
     } else {
 #ifdef Q_OS_MACOS
@@ -701,6 +717,13 @@ bool MpvController::autoCropEnabled() const {
         return false;
     const QVariant v = m_appCore->get_setting(QString(), "auto_crop");
     return v.toString().compare(QStringLiteral("On"), Qt::CaseInsensitive) == 0;
+}
+
+bool MpvController::cropUnavailable() const {
+    // The Pi 3 smooth (overlay-plane) path is the one decode path that can't
+    // crop/zoom: --panscan blanks the video there. (Ignores the mpv_video_args
+    // override, same as the auto-crop gate — the setting still reflects intent.)
+    return m_videoProfile == VideoProfile::Pi3 && smoothPlaybackEnabled();
 }
 
 bool MpvController::hasSmoothPlaybackTradeoff() const {

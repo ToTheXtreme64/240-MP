@@ -105,6 +105,10 @@ private:
     // App-level "auto_crop" setting (default OFF). When ON, playback starts with
     // panscan=1 so video fills a CRT/4:3 screen by default (still toggleable live).
     bool autoCropEnabled() const;
+    // True when the active decode path can't crop (Pi 3 overlay path with smooth
+    // playback ON): --panscan blanks the video there. Gates auto-crop and tells
+    // the OSC scripts to hide their CROP button.
+    bool cropUnavailable() const;
     int  getActiveVt() const;
     int  findFreeVt() const;
     int  findQtDrmFd() const;
@@ -128,6 +132,9 @@ private:
     QString       m_logFilePath;
     QString       m_subInfoPath;       // JSON map: external sub URL -> friendly name (for the OSC)
     QString       m_lastEndFileReason;  // mpv end-file "reason" for the current session
+    // Set when this session passed --start; cleared once mpv has applied it. See
+    // onIpcReadyRead's playback-restart handling for why the option can't just stay set.
+    bool          m_pendingStartClear = false;
     int           m_position     = 0;
     int           m_duration     = 0;
     int           m_playlistPos  = -1;

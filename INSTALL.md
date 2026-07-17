@@ -161,7 +161,7 @@ However, if you already have Raspberry Pi OS set up and working on your TV then 
     [pi5]
 
     # Drivers & Video
-    dtoverlay=vc4-kms-v3d,cma-512,composite=1
+    dtoverlay=vc4-kms-v3d
     
     # --- Global ---
     [all]
@@ -195,6 +195,8 @@ However, if you already have Raspberry Pi OS set up and working on your TV then 
     - If you ever need to inspect the autostart logs later, use `sudo journalctl -u 240mp -f`
 
 At this point you can type `240mp` at any time to start up the app.  And if you installed the autostart service then the next time you boot your Pi it will boot directly into 240-MP.
+
+The Local Files module will be enabled by default and you can open settings to enable any other modules you would like to display.  Please see the [modules section](https://github.com/anthonycaccese/240-MP/wiki#modules) in the wiki for details on any additional set up that may be needed for the modules you'd like to use.
 
 **If analog / composite audio is unusually quiet:** 
 - Run `amixer sset PCM 100%`
@@ -259,6 +261,7 @@ If you don't have a Raspberry Pi and would like to try 240-MP, I also provide a 
 2. Mount it and move the 240mp.app into your Applications folder
 3. Make sure you have mpv installed (240-MP requires MPV for playback): `brew install mpv`
 4. Double click 240-MP and it should open full screen
+5. The Local Files module will be enabled by default and you can open settings to enable any other modules you would like to display.  Please see the [modules section](https://github.com/anthonycaccese/240-MP/wiki#modules) in the wiki for details on any additional set up that may be needed for the modules you'd like to use.
 
 ### Update
 

@@ -91,6 +91,10 @@ local function has_playlist()
     return (mp.get_property_number("playlist-count", 1) or 1) > 1
 end
 
+-- Set by MpvController on decode paths where --panscan blanks the video
+-- (Pi 3 overlay path with 1080p Playback ON) — the CROP button would be a no-op.
+local hide_crop = mp.get_opt("hide-crop") == "1"
+
 local function build_left_btns(has_sub, has_pl, bar_w)
     local btns = {}
     if skip_active then
@@ -102,7 +106,9 @@ local function build_left_btns(has_sub, has_pl, bar_w)
     if has_sub then
         table.insert(btns, {label="SUBTITLE", width=math.floor(bar_w * 0.15625), action=btn_actions[2]})
     end
-    table.insert(btns, {label="CROP", width=math.floor(bar_w * 0.090625), action=btn_actions[3]})
+    if not hide_crop then
+        table.insert(btns, {label="CROP", width=math.floor(bar_w * 0.090625), action=btn_actions[3]})
+    end
     if has_pl then
         table.insert(btns, {label="<", width=math.floor(bar_w * 0.055), action=btn_actions[5]})
         table.insert(btns, {label=">", width=math.floor(bar_w * 0.055), action=btn_actions[6]})
@@ -112,13 +118,16 @@ end
 
 local transcode_offset = tonumber(mp.get_opt("transcode-offset") or "0") or 0
 
--- Latch duration on first valid read; used to detect PTS base shifts during HLS seeking
+-- Latch duration on the first valid read of each file: when Plex restarts an HLS
+-- transcode after rapid seeking, `duration` can spike mid-stream and corrupt the
+-- end-time display. Cleared per file so each playlist item latches its own duration.
 local stable_duration = nil
 mp.observe_property("duration", "number", function(_, value)
     if value and value > 0 and not stable_duration then
         stable_duration = value
     end
 end)
+mp.register_event("start-file", function() stable_duration = nil end)
 
 local function format_time(seconds)
     if not seconds or seconds < 0 then seconds = 0 end
@@ -214,7 +223,7 @@ local function draw_menu()
     end
 
     -- ── Row 3: Buttons ────────────────────────────────────────────
-    -- Left group: AUDIO, [SUBTITLE], CROP
+    -- Left group: [SKIP], AUDIO, [SUBTITLE], [CROP], [< >]
     local stop_idx = #left_btns + 1
     local bx = lm
     for i, btn in ipairs(left_btns) do
