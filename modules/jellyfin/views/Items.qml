@@ -21,7 +21,7 @@ FocusScope {
     property bool isLoading: false
     property string errorMessage: ""
 
-    // A–Z letter-jump panel - only for the alphabetized full-library list
+    // A–Z letter-jump panel — only for the alphabetized full-library list
     // ("browse"); resume/up_next are not alpha-sorted.
     property bool showLetterNav: mode === "browse" || mode === "folder" || itemListRoot.mode === "boxset"
     property bool letterNavActive: false
