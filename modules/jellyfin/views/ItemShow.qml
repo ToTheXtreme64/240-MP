@@ -35,6 +35,7 @@ FocusScope {
             if (loadedItems.length > 0) {
                 var restore = (navListState.currentIndex !== undefined) ? navListState.currentIndex : 0
                 seasonList.currentIndex = Math.min(restore, loadedItems.length - 1)
+                if (navListState.focusRow === 1) focusRow = 1
                 seasonList.positionViewAtIndex(seasonList.currentIndex, ListView.Contain)
             }
         }
@@ -119,7 +120,7 @@ FocusScope {
                 seriesId: item.itemId,
                 showTitle: item.title,
                 libraryName: libraryName
-            }, { currentIndex: seasonList.currentIndex })
+            }, { currentIndex: seasonList.currentIndex, focusRow: 1 })
         }
     }
     Keys.onPressed: function(event) {
