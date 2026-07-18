@@ -272,7 +272,8 @@ FocusScope {
         }
         Keys.onUpPressed: {
             if (wlOverlayVisible) {
-                wlChoiceIndex = 0
+                if(wlChoiceIndex === 0) wlChoiceIndex = 1
+                else wlChoiceIndex = 0
                 event.accepted = true
                 return
             }
@@ -283,7 +284,8 @@ FocusScope {
         }
         Keys.onDownPressed: {
             if (wlOverlayVisible) {
-                wlChoiceIndex = 1
+                if(wlChoiceIndex === 0) wlChoiceIndex = 1
+                else wlChoiceIndex = 0
                 event.accepted = true
                 return
             }
@@ -295,10 +297,12 @@ FocusScope {
         Keys.onPressed: function(event) {
             if (wlOverlayVisible) {
                 if (event.key === Qt.Key_Up) {
-                    wlChoiceIndex = 0
+                    if(wlChoiceIndex === 0) wlChoiceIndex = 1
+                    else wlChoiceIndex = 0
                     event.accepted = true
                 } else if (event.key === Qt.Key_Down) {
-                    wlChoiceIndex = 1
+                    if(wlChoiceIndex === 0) wlChoiceIndex = 1
+                    else wlChoiceIndex = 0
                     event.accepted = true
                 } else if (event.key === Qt.Key_Escape || event.key === Qt.Key_Backspace || event.key === Qt.Key_Back) {
                     wlOverlayVisible = false
