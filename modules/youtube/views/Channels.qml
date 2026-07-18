@@ -139,13 +139,37 @@ FocusScope {
 
         Keys.onUpPressed: {
             if (count === 0) return
-            if (currentIndex > 0) currentIndex--
-            else currentIndex = count - 1
+            if (currentIndex > 0) {
+                currentIndex--
+                var curLetter = sortKey((items[itemList.currentIndex] && items[itemList.currentIndex].title) || "")
+                for (var i = 0; i < letterIndex.length; i++) {
+                    if (letterIndex[i].letter === curLetter) { letterList.currentIndex = i; break }
+                }
+                letterList.positionViewAtIndex(letterList.currentIndex, ListView.Contain)
+            }
+            else {
+                currentIndex = count - 1
+                itemList.positionViewAtIndex(currentIndex, ListView.Contain)
+                letterList.currentIndex = letterIndex.length - 1
+                letterList.positionViewAtIndex(letterList.currentIndex, ListView.Contain)
+            }
         }
         Keys.onDownPressed: {
             if (count === 0) return
-            if (currentIndex < count - 1) currentIndex++
-            else currentIndex = 0
+            if (currentIndex < count - 1) {
+                currentIndex++
+                var curLetter = sortKey((items[itemList.currentIndex] && items[itemList.currentIndex].title) || "")
+                for (var i = 0; i < letterIndex.length; i++) {
+                    if (letterIndex[i].letter === curLetter) { letterList.currentIndex = i; break }
+                }
+                letterList.positionViewAtIndex(letterList.currentIndex, ListView.Contain)
+            }
+            else {
+                currentIndex = 0
+                itemList.positionViewAtIndex(currentIndex, ListView.Contain)
+                letterList.currentIndex = 0
+                letterList.positionViewAtIndex(letterList.currentIndex, ListView.Contain)
+            }
         }
         Keys.onReturnPressed: {
             var item = items[itemList.currentIndex]
@@ -237,18 +261,28 @@ FocusScope {
         focus: false
 
         Keys.onUpPressed: {
+            if (count === 0) return
             if (currentIndex > 0) {
                 currentIndex--
-                itemList.currentIndex = letterIndex[currentIndex].firstIndex
-                itemList.positionViewAtIndex(itemList.currentIndex, ListView.Beginning)
             }
+            else {
+                currentIndex = count - 1
+                letterList.positionViewAtIndex(letterList.currentIndex, ListView.Beginning)
+            }
+            itemList.currentIndex = letterIndex[currentIndex].firstIndex
+            itemList.positionViewAtIndex(itemList.currentIndex, ListView.Beginning)
         }
         Keys.onDownPressed: {
+            if (count === 0) return
             if (currentIndex < count - 1) {
                 currentIndex++
-                itemList.currentIndex = letterIndex[currentIndex].firstIndex
-                itemList.positionViewAtIndex(itemList.currentIndex, ListView.Beginning)
             }
+            else {
+                currentIndex = 0
+                letterList.positionViewAtIndex(letterList.currentIndex, ListView.Beginning)
+            }
+            itemList.currentIndex = letterIndex[currentIndex].firstIndex
+            itemList.positionViewAtIndex(itemList.currentIndex, ListView.Beginning)
         }
         Keys.onReturnPressed: {
             letterNavActive = false
