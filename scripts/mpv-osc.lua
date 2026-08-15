@@ -377,7 +377,7 @@ local function toggle_menu()
         update_timer = mp.add_periodic_timer(0.5, draw_menu)
         reset_idle_timer()
 
-        p.add_forced_key_binding("UP",    "menu-up",    function() update_nav("up")    end)
+        mp.add_forced_key_binding("UP",    "menu-up",    function() update_nav("up")    end)
         mp.add_forced_key_binding("DOWN",  "menu-down",  function() update_nav("down")  end)
         mp.add_forced_key_binding("LEFT",  "menu-left",  function() update_nav("left")  end, {repeatable = true})
         mp.add_forced_key_binding("RIGHT", "menu-right", function() update_nav("right") end, {repeatable = true})
